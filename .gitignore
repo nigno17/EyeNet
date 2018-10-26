@@ -2,7 +2,7 @@
 Datasets/
 
 # Old code and old networks
-OldNets/
+Nets/
 OldCode/
 
 # Byte-compiled / optimized / DLL files
