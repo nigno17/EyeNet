@@ -3,7 +3,6 @@ Datasets/
 
 # Old code and old networks
 Nets/
-OldCode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
