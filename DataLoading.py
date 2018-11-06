@@ -332,6 +332,7 @@ class MirkoDatasetRegNorm(Dataset):
             self.std = np.std(total_labels, axis=0, keepdims=False)
             np.save('mean.npy', self.mean)
             np.save('std.npy', self.std)
+            np.save('training_per', training_per)
         else:
             self.mean = np.load('mean.npy')
             self.std = np.load('std.npy')
@@ -461,6 +462,7 @@ class MirkoDatasetRegNormRam(Dataset):
             self.std = np.std(total_labels, axis=0, keepdims=False)
             np.save('mean.npy', self.mean)
             np.save('std.npy', self.std)
+            np.save('training_per', training_per)
         else:
             self.mean = np.load('mean.npy')
             self.std = np.load('std.npy')

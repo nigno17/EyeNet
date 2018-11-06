@@ -19,8 +19,8 @@ warnings.filterwarnings("ignore")
 plt.ion()   # interactive mode
 
 #root_dir = '/media/nigno/Data/simulatedEyesDataset/imgs/'
-root_dir = '/media/nigno/Data/UnityProjects/UnityEyes-master/Bulid/imgs/'
-save_root_dir = '/media/nigno/Data/simDatasetNetNoRandom/'
+root_dir = '/media/nigno/Data/UnityProjects/UnityEyes/Build/imgs/'
+save_root_dir = '/media/nigno/Data/Projects/EyeNet/Datasets/TestDatasetSim/'
 
 dataset_list = os.listdir(root_dir)
 num_images = int(len(dataset_list) / 4)

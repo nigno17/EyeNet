@@ -1,6 +1,9 @@
 # Datasets folder
 Datasets/
 
+# Checkpoints directory
+Checkpoints/
+
 # Old code and old networks
 Nets/
 
