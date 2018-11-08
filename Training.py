@@ -56,7 +56,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-train = False
+train = True
 restore = False
 
 # Number of time the network is trained
@@ -91,7 +91,7 @@ for trials in range(N_trials):
     
     root_dataset = 'Datasets/simDatasetNetNoRandom/'
     root_dataset_test = 'Datasets/TestDatasetSim/'
-    net_dir = 'Nets/LoglikeNoRandom/'
+    net_dir = 'Nets/LoglikeNoRandomLr3Wd5/'
     checkpoint_dir = net_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
@@ -305,7 +305,7 @@ for trials in range(N_trials):
         criterion = LogLikeLoss
     
         # Observe that all parameters are being optimized
-        #optimizer_ft = optim.ADAM(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
         #optimizer_ft = optim.Adam(model.parameters())
     
         # Decay LR by a factor of 0.1 every 7 epochs
@@ -354,7 +354,7 @@ for trials in range(N_trials):
     # Generating the folders for the test set  
     test_root_dir_list = []
     test_per_lis = []
-    for i in range(10):
+    for i in range(45):
         test_root_dir_list.append(root_dataset_test + str(i) + '/')
         test_per_lis.append(0.0)
     
@@ -400,8 +400,8 @@ for trials in range(N_trials):
             ground_truth_np = label.data.numpy()
         
         # NORMALIZATION
-        #pred_np = (pred_np * std) + mean
-        #ground_truth_np = (ground_truth_np * std) + mean
+        pred_np = (pred_np * std) + mean
+        ground_truth_np = (ground_truth_np * std) + mean
             
         if count == 0:
             predictions = pred_np

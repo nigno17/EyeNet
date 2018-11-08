@@ -8,8 +8,10 @@ abs_val_tr3_te1 = importdata('../abs_list_val.txt');
 %abs_train_tr3 = importdata('abs_list_tr3.txt');
 %abs_val_tr3 = importdata('abs_list_val_tr3.txt');
 
+size(abs_train_tr3_te1)
+
 line_width = 3;
-epochs = 100;
+epochs = 10000;
 
 figure('units','normalized','outerposition',[0 0 1 1])
 plot(abs_train_tr3_te1(1:epochs), 'b--', 'LineWidth', line_width)
@@ -23,7 +25,7 @@ title('Euclidian distance', 'FontSize', 25)
 xlabel('Epochs', 'FontSize', 20)
 ylabel('Distance (m)', 'FontSize', 20)
 legend({'Train','Test'}, 'FontSize',20)
-axis([0 epochs 0 0.4])
+axis([0 epochs -1000 1000])
 set(gca, 'FontSize', 20)
 grid on
 
@@ -32,14 +34,23 @@ grid on
 predictions = importdata('../predictions.txt');
 ground_truth = importdata('../ground_truth.txt');
 
+
+figure()
+title('Scatter 3D predictions', 'FontSize', 25)
+scatter3(predictions(:, 1), predictions(:, 2), predictions(:, 3))
+
+figure()
+title('Scatter 3D ground_truth', 'FontSize', 25)
+scatter3(ground_truth(:, 1), ground_truth(:, 2), ground_truth(:, 3))
+
 pred_len = length(predictions);
 
 windowSize = 50; 
 b = (1/windowSize)*ones(1,windowSize);
 a = 1;
 
-predictionsFilteredx = filter(b,a,predictions(:, 1));
-%predictionsFilteredx = predictions(:, 1);
+%predictionsFilteredx = filter(b,a,predictions(:, 1));
+predictionsFilteredx = predictions(:, 1);
 
 figure('units','normalized','outerposition',[0 0 1 1])
 plot(predictionsFilteredx, 'b--', 'LineWidth', line_width)
@@ -58,8 +69,8 @@ windowSize = 50;
 b = (1/windowSize)*ones(1,windowSize);
 a = 1;
 
-predictionsFilteredy = filter(b,a,predictions(:, 2));
-%predictionsFilteredy = predictions(:, 2);
+%predictionsFilteredy = filter(b,a,predictions(:, 2));
+predictionsFilteredy = predictions(:, 2);
 
 figure('units','normalized','outerposition',[0 0 1 1])
 plot(predictionsFilteredy, 'b--', 'LineWidth', line_width)
@@ -74,8 +85,8 @@ legend({'Predictions','Ground truth'}, 'FontSize',20)
 set(gca, 'FontSize', 20)
 grid on
 
-predictionsFilteredz = filter(b,a,predictions(:, 3));
-%predictionsFilteredz = predictions(:, 3);
+%predictionsFilteredz = filter(b,a,predictions(:, 3));
+predictionsFilteredz = predictions(:, 3);
 
 figure('units','normalized','outerposition',[0 0 1 1])
 plot(predictionsFilteredz, 'b--', 'LineWidth', line_width)
