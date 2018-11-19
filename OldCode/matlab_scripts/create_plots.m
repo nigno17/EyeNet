@@ -101,6 +101,10 @@ legend({'Predictions','Ground truth'}, 'FontSize',20)
 set(gca, 'FontSize', 20)
 grid on
 
+figure()
+title('Scatter 3D predictions filtered', 'FontSize', 25)
+scatter3(predictionsFilteredx, predictionsFilteredy, predictionsFilteredz)
+
 %% prediction results 3D 
 
 % Set up the movie.

@@ -281,7 +281,7 @@ class MirkoDatasetReg(Dataset):
 class MirkoDatasetRegNorm(Dataset):
     """Face trajectories dataset."""
 
-    def __init__(self, root_dir, training_per, transform=None, dset_type='train', seed=1, permuted= True):
+    def __init__(self, root_dir, training_per, transform=None, dset_type='train', seed=1, permuted= True, meanStd = True):
         """
         Args:
             indices_file (string): Path to the txt file with image indices.
@@ -291,6 +291,8 @@ class MirkoDatasetRegNorm(Dataset):
                 on a sample.
         """
         
+        self.meanStd_ = meanStd
+
         self.num_train_sets = len(root_dir)
         
         self.root_dir = root_dir
@@ -356,6 +358,10 @@ class MirkoDatasetRegNorm(Dataset):
         sum_idx -= len(self.indices[i])
         idx -= sum_idx
         
+        print(i)
+	print(idx)
+        print(self.indices[i][idx])
+
         img_name = str(self.indices[i][idx]) + '.png'
         
         cv_image = cv2.imread(self.root_dir[i] + 'left' + img_name)
@@ -378,7 +384,10 @@ class MirkoDatasetRegNorm(Dataset):
         #image_right = io.imread(self.root_dir[i] + 'right' + img_name)
         
         label = np.asarray(self.labels[i][self.indices[i][idx]])
-        label = (label - self.mean) / self.std
+        if self.meanStd_:
+            label = (label - self.mean) / self.std
+
+        print (label)
         
         sample = {'image_left': image_left, 
                   'image_right': image_right, 
@@ -392,7 +401,7 @@ class MirkoDatasetRegNorm(Dataset):
 class MirkoDatasetRegNormRam(Dataset):
     """Face trajectories dataset."""
 
-    def __init__(self, root_dir, training_per, transform=None, dset_type='train', seed=1, permuted= True):
+    def __init__(self, root_dir, training_per, transform=None, dset_type='train', seed=1, permuted= True, meanStd = True):
         """
         Args:
             indices_file (string): Path to the txt file with image indices.
@@ -401,7 +410,7 @@ class MirkoDatasetRegNormRam(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        
+        self.meanStd_ = meanStd
         self.num_train_sets = len(root_dir)
         
         self.root_dir = root_dir
@@ -498,7 +507,10 @@ class MirkoDatasetRegNormRam(Dataset):
         #image_right = io.imread(self.root_dir[i] + 'right' + img_name)
         
         label = np.asarray(self.labels[i][self.indices[i][idx]])
-        label = (label - self.mean) / self.std
+        if self.meanStd_:
+            label = (label - self.mean) / self.std
+        
+	print (label)
         
         sample = {'image_left': image_left, 
                   'image_right': image_right, 

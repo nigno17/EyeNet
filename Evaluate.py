@@ -53,8 +53,8 @@ data_transforms_custom2 = transforms.Compose([Rescale((240, 320)),
                                               ToTensor()])
 seed = 1
 
-root_dataset_test = 'Datasets/TestDatasetSim/'
-net_dir = 'Nets/LoglikeNoRandomLr3Wd5/'
+root_dataset_test = 'Datasets/TestDatasetSimCorrected/'
+net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_7m_corrected/'
 checkpoint_dir = net_dir + 'checkpoints/'
      
 
@@ -66,9 +66,12 @@ print(model)
 
 optimizer_ft = optim.Adam(model.parameters())
 
-if os.path.isfile(checkpoint_dir + 'checkpointAllEpochs.tar'):
-    print("=> loading checkpoint '{}'".format(checkpoint_dir + 'checkpointAllEpochs.tar'))
-    checkpoint = torch.load(checkpoint_dir + 'checkpointAllEpochs.tar')
+checkpoint_name = 'checkpoint1530.tar'
+#checkpoint_name = 'checkpointAllEpochs.tar'
+
+if os.path.isfile(checkpoint_dir + checkpoint_name):
+    print("=> loading checkpoint '{}'".format(checkpoint_dir + checkpoint_name))
+    checkpoint = torch.load(checkpoint_dir + checkpoint_name)
     start_epoch = checkpoint['epoch']
     best_abs = checkpoint['best_abs']
     loss_list = checkpoint['loss_list']
@@ -83,10 +86,12 @@ if os.path.isfile(checkpoint_dir + 'checkpointAllEpochs.tar'):
 count = 0
 time_elapsed_single = 0
 
+n_folders = 7
+
 # Generating the folders for the test set  
 test_root_dir_list = []
 test_per_lis = []
-for i in range(45):
+for i in range(n_folders):
     test_root_dir_list.append(root_dataset_test + str(i) + '/')
     test_per_lis.append(0.0)
 

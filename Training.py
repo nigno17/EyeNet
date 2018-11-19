@@ -56,8 +56,8 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-train = True
-restore = False
+train = False
+restore = True
 
 # Number of time the network is trained
 N_trials = 1
@@ -89,9 +89,10 @@ for trials in range(N_trials):
                                                   ToTensor()])
     seed = trials + 1
     
-    root_dataset = 'Datasets/simDatasetNetNoRandom/'
-    root_dataset_test = 'Datasets/TestDatasetSim/'
-    net_dir = 'Nets/LoglikeNoRandomLr3Wd5/'
+    #root_dataset = 'Datasets/simDatasetNetNoRandom/'
+    root_dataset = 'Datasets/TestDatasetSimCorrected/'
+    root_dataset_test = 'Datasets/TestDatasetSimCorrected/'
+    net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_7m_corrected/'
     checkpoint_dir = net_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
@@ -100,7 +101,7 @@ for trials in range(N_trials):
     # Generating the folders for the training and validation set
     root_dir_list = []
     train_per_lis = []
-    for i in range(10):
+    for i in range(7):
         root_dir_list.append(root_dataset + str(i) + '/')
         train_per_lis.append(0.7)
     
@@ -109,12 +110,12 @@ for trials in range(N_trials):
                                         transform = data_transforms_custom1,
                                         dset_type='train', seed=seed, 
                                         training_per = train_per_lis,
-                                        permuted = False)
+                                        permuted = True)
     dataset_test = MirkoDatasetRegNormRam(root_dir = root_dir_list,
                                        transform = data_transforms_custom2,
                                        dset_type='val', seed=seed,
                                        training_per = train_per_lis,
-                                       permuted = False)
+                                       permuted = True)
     # NORMALIZATION
     mean = np.load('mean.npy')
     std = np.load('std.npy')
@@ -203,6 +204,7 @@ for trials in range(N_trials):
                     # forward
                     pred, cov = model(img1, img2)
                     loss = criterion(pred, cov, label)
+                    #loss = criterion(pred, label)
                     
                     # try to change the loss function
                     #gain = Variable(torch.Tensor((1 / label.cpu().data.numpy()[:, 2])).cuda())                                      
@@ -297,11 +299,11 @@ for trials in range(N_trials):
         
     print(model)
     
-    optimizer_ft = optim.Adam(model.parameters())
+    optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
       
     if (train == True):
 #        criterion = nn.CrossEntropyLoss()
-#        criterion = nn.MSELoss()
+        #criterion = nn.MSELoss()
         criterion = LogLikeLoss
     
         # Observe that all parameters are being optimized
@@ -354,7 +356,7 @@ for trials in range(N_trials):
     # Generating the folders for the test set  
     test_root_dir_list = []
     test_per_lis = []
-    for i in range(45):
+    for i in range(7):
         test_root_dir_list.append(root_dataset_test + str(i) + '/')
         test_per_lis.append(0.0)
     
