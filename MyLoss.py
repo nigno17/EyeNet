@@ -30,6 +30,7 @@ def LogLikeLoss(output_mean, output_cov, target):
         cov = L.mm(L.t())
         m = MultivariateNormal(mean[i], cov)
         loss -= m.log_prob(target[i])
+    loss /= numEl
         
     
     

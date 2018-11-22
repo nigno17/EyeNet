@@ -11,7 +11,7 @@ Created on Tue Oct 31 15:32:41 2017
 
 from __future__ import print_function, division
 
-from GazeNet import GazeNetRegMeanVar
+from GazeNet import GazeNetRegMeanVar, GazeNetRegDir
 
 from MyLoss import LogLikeLoss
 
@@ -92,7 +92,9 @@ for trials in range(N_trials):
     root_dataset = 'Datasets/TestDatasetSimDirections/'
     root_dataset_test = 'Datasets/TestDatasetSimDirections/'
     net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction_pos/'
+    dirNet_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction/'
     checkpoint_dir = net_dir + 'checkpoints/'
+    checkpoint_dirNet_dir = dirNet_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
     #root_dataset_test = 'DatasetBig/'
@@ -291,14 +293,30 @@ for trials in range(N_trials):
         model.load_state_dict(best_model_wts)
         return model, time_train, time_val
          
+
+    dirNet = GazeNetRegDir(1024)
+    if os.path.isfile(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar'):
+        print("=> loading checkpoint '{}'".format(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar'))
+        checkpoint = torch.load(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar')
+        dirNet.load_state_dict(checkpoint['state_dict'])
+        print("=> loaded checkpoint (epoch {})"
+                  .format(checkpoint['epoch']))
+                  
+    for param in dirNet.parameters():
+        param.requires_grad = False
     
     model = GazeNetRegMeanVar(1024)
+    model.features = dirNet.features
+    model.latent1 = dirNet.latent1
+    
     if (use_gpu):
         model = model.cuda()
         
     print(model)
     
-    optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
+    params = list(model.fc_layers.parameters()) + list(model.mean.parameters()) + list(model.cov.parameters())
+    
+    optimizer_ft = optim.Adam(params, lr=1e-3, weight_decay=1e-8)
       
     if (train == True):
 #        criterion = nn.CrossEntropyLoss()
@@ -306,7 +324,7 @@ for trials in range(N_trials):
         criterion = LogLikeLoss
     
         # Observe that all parameters are being optimized
-        optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
+        optimizer_ft = optim.Adam(params, lr=1e-3, weight_decay=1e-8)
         #optimizer_ft = optim.Adam(model.parameters())
     
         # Decay LR by a factor of 0.1 every 7 epochs
@@ -334,7 +352,7 @@ for trials in range(N_trials):
             
     if (restore == True):
         #        criterion = nn.CrossEntropyLoss()
-        #        criterion = nn.MSELoss()
+        #criterion = nn.MSELoss()
         criterion = LogLikeLoss
         
         # Observe that all parameters are being optimized

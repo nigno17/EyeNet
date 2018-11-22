@@ -345,6 +345,124 @@ class GazeNetRegMeanVar(torch.nn.Module):
         
         return output_mean, output_cov
         
+class GazeNetRegDir(torch.nn.Module):
+    def __init__(self, D_latent = 512):
+        
+        super(GazeNetRegDir, self).__init__()
+        #self.D_features = 256 * 6 * 6
+        self.D_features = 256 * 6 * 9
+        
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        self.latent1 = nn.Sequential(
+            nn.Linear(self.D_features, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Linear(D_latent, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.mean = nn.Sequential(
+            nn.Linear(D_latent, 3)
+        )
+        
+
+    def forward(self, img):
+
+        features1 = self.features(img)
+        features1 = features1.view(features1.size(0), self.D_features)
+        
+        lat1 = self.latent1(features1)
+
+        fc_output = self.fc_layers(lat1)
+        
+        output_mean = self.mean(fc_output)
+        
+        return output_mean
+        
+class GazeNetRegVggDir(torch.nn.Module):
+    def __init__(self, D_latent = 512):
+        
+        super(GazeNetRegVggDir, self).__init__()
+        #self.D_features = 256 * 6 * 6
+        self.D_features = 512 * 7 * 10
+        
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+        )
+        self.latent1 = nn.Sequential(
+            nn.Linear(self.D_features, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Linear(D_latent, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.mean = nn.Sequential(
+            nn.Linear(D_latent, 3)
+        )
+        
+
+    def forward(self, img):
+
+        features1 = self.features(img)
+        features1 = features1.view(features1.size(0), self.D_features)
+        
+        lat1 = self.latent1(features1)
+
+        fc_output = self.fc_layers(lat1)
+        
+        output_mean = self.mean(fc_output)
+        
+        return output_mean
+        
 class GazeNetRegVgg(torch.nn.Module):
     def __init__(self, D_latent = 512):
         

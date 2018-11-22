@@ -11,7 +11,7 @@ abs_val_tr3_te1 = importdata('../abs_list_val.txt');
 size(abs_train_tr3_te1)
 
 line_width = 3;
-epochs = 10000;
+epochs = 1000;
 
 figure('units','normalized','outerposition',[0 0 1 1])
 plot(abs_train_tr3_te1(1:epochs), 'b--', 'LineWidth', line_width)

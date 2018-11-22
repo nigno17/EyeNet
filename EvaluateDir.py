@@ -11,11 +11,11 @@ Created on Tue Oct 31 15:32:41 2017
 
 from __future__ import print_function, division
 
-from GazeNet import GazeNetRegMeanVar
+from GazeNet import GazeNetRegDir
 
 from MyLoss import LogLikeLoss
 
-from DataLoading import MirkoDatasetRegNorm, MirkoDatasetRegNormRam, Rescale, ToTensor, Normalize, RandomNoise
+from DataLoadingDir import MirkoDatasetRegNorm, MirkoDatasetRegNormRam, Rescale, ToTensor, Normalize, RandomNoise
 
 import torch
 import torch.nn as nn
@@ -54,17 +54,19 @@ data_transforms_custom2 = transforms.Compose([Rescale((240, 320)),
 seed = 1
 
 root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction_pos/'
+net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction/'
 checkpoint_dir = net_dir + 'checkpoints/'
      
 
-model = GazeNetRegMeanVar(1024)
+model = GazeNetRegDir(1024)
 if (use_gpu):
     model = model.cuda()
     
 print(model)
 
-#checkpoint_name = 'checkpoint10.tar'
+optimizer_ft = optim.Adam(model.parameters())
+
+#checkpoint_name = 'checkpoint1530.tar'
 checkpoint_name = 'checkpointAllEpochs.tar'
 
 if os.path.isfile(checkpoint_dir + checkpoint_name):
@@ -77,16 +79,14 @@ if os.path.isfile(checkpoint_dir + checkpoint_name):
     loss_list_val = checkpoint['loss_list_val']
     abs_list_val = checkpoint['abs_list_val']
     model.load_state_dict(checkpoint['state_dict'])
+    optimizer_ft.load_state_dict(checkpoint['optimizer'])
     print("=> loaded checkpoint (epoch {})"
               .format(checkpoint['epoch']))
-              
-for param in model.parameters():
-  print(param.data)
 
 count = 0
 time_elapsed_single = 0
 
-n_folders = 7
+n_folders = 8
 
 # Generating the folders for the test set  
 test_root_dir_list = []
@@ -103,9 +103,7 @@ dataset_test = MirkoDatasetRegNorm(root_dir = test_root_dir_list,
 
 dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=2,
                                               shuffle=False, num_workers=8)  
-                                              
-mean = np.load(net_dir + 'mean.npy')
-std = np.load(net_dir + 'std.npy')    
+                                                
 
 for data in dataloader_test:
     # Go through a bunch of examples and record which are correctly guessed
@@ -114,36 +112,27 @@ for data in dataloader_test:
     samples = data
     # wrap them in Variable
     if (use_gpu):
-        img1 = Variable(samples['image_left'].cuda())
-        img2 = Variable(samples['image_right'].cuda())
+        img = Variable(samples['image'].cuda())
         label = Variable(samples['label'].cuda())
     else:
-        img1 = Variable(samples['image_left'])
-        img2 = Variable(samples['image_right'])
+        img = Variable(samples['image'])
         label = Variable(samples['label'])
     
     start_time = time.time()
     #PROVA-----------------------
     #pred = model(img1.unsqueeze(0), img2.unsqueeze(0))
-    pred, cov = model(img1, img2)
+    pred = model(img)
     
     if (use_gpu):
         pred_np = pred.cpu().data.numpy()
-        cov_np = cov.cpu().data.numpy()
         ground_truth_np = label.cpu().data.numpy()
     else:
         pred_np = pred.data.numpy()
-        cov_np = cov.data.numpy()
         ground_truth_np = label.data.numpy()
-    
-    # NORMALIZATION
-    pred_np = (pred_np * std) + mean
-    ground_truth_np = (ground_truth_np * std) + mean
         
     if count == 0:
         predictions = pred_np
         ground_truth = ground_truth_np
-        covariance = cov_np
     else:
         predictions = np.concatenate((predictions, pred_np), axis=0)
         ground_truth = np.concatenate((ground_truth, ground_truth_np), axis=0)

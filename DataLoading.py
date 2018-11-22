@@ -127,69 +127,6 @@ class RandomNoise(object):
                 'image_right': img_r, 
                 'label': label}
     
-class MirkoDataset(Dataset):
-    """Face trajectories dataset."""
-
-    def __init__(self, root_dir, transform=None, dset_type='train', seed=1):
-        """
-        Args:
-            indices_file (string): Path to the txt file with image indices.
-            traj_dir (string): Directory with all the trajectories.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        
-        nframes = int((len(os.listdir(root_dir)) - 2) / 2)
-
-        np.random.seed(seed)
-        permuted_indeces = np.random.permutation(range(nframes))
-        
-        train_number = int(nframes * 0.7)
-        if dset_type == 'train':
-            self.indices = permuted_indeces[:train_number]
-        else:
-            self.indices = permuted_indeces[train_number:]
-            
-        
-
-        self.fps = 120
-        self.root_dir = root_dir
-        self.transform = transform
-        self.n_lables = 4
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx):
-        img_name = str(self.indices[idx]) + '.png'
-        image_left = io.imread(self.root_dir + 'left' + img_name)
-        image_right = io.imread(self.root_dir + 'right' + img_name)
-        
-        if self.indices[idx] < 504:
-            label_int = 0
-        elif self.indices[idx] < 1032:
-            label_int = 1
-        elif self.indices[idx] < 1572:
-            label_int = 2 
-        else:
-            label_int = 3
-        
-        label_idx = torch.LongTensor(1)
-        label_idx[0] = label_int 
-        label = torch.FloatTensor(self.n_lables)
-        label.zero_()
-        label.scatter_(0, label_idx, 1)
-        
-        sample = {'image_left': image_left, 
-                  'image_right': image_right, 
-                  'label': label.numpy()}
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
-    
 class MirkoDatasetReg(Dataset):
     """Face trajectories dataset."""
 
@@ -252,12 +189,12 @@ class MirkoDatasetReg(Dataset):
         # grab the dimensions of the image and calculate the center
         # of the image
         (h, w) = cv_image.shape[:2]
-        center = (w / 2, h / 2)
+        #center = (w / 2, h / 2)
         # rotate the image by 180 degrees
-        M = cv2.getRotationMatrix2D(center, 180, 1.0)
-        rotated = cv2.warpAffine(cv_image, M, (w, h))
+        #M = cv2.getRotationMatrix2D(center, 180, 1.0)
+        #rotated = cv2.warpAffine(cv_image, M, (w, h))
         
-        image_left = np.expand_dims(cv2.cvtColor(rotated, cv2.COLOR_BGR2GRAY), axis=2)
+        image_left = np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2)
         cv_image = cv2.imread(self.root_dir[i] + 'right' + img_name)
         image_right = np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2)        
         
@@ -357,10 +294,6 @@ class MirkoDatasetRegNorm(Dataset):
             sum_idx += len(self.indices[i])
         sum_idx -= len(self.indices[i])
         idx -= sum_idx
-        
-        print(i)
-	print(idx)
-        print(self.indices[i][idx])
 
         img_name = str(self.indices[i][idx]) + '.png'
         
@@ -368,12 +301,12 @@ class MirkoDatasetRegNorm(Dataset):
         # grab the dimensions of the image and calculate the center
         # of the image
         (h, w) = cv_image.shape[:2]
-        center = (w / 2, h / 2)
+        #center = (w / 2, h / 2)
         # rotate the image by 180 degrees
-        M = cv2.getRotationMatrix2D(center, 180, 1.0)
-        rotated = cv2.warpAffine(cv_image, M, (w, h))
+#        M = cv2.getRotationMatrix2D(center, 180, 1.0)
+#        rotated = cv2.warpAffine(cv_image, M, (w, h))
         
-        image_left = np.expand_dims(cv2.cvtColor(rotated, cv2.COLOR_BGR2GRAY), axis=2)
+        image_left = np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2)
         cv_image = cv2.imread(self.root_dir[i] + 'right' + img_name)
         image_right = np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2)        
         
@@ -386,8 +319,6 @@ class MirkoDatasetRegNorm(Dataset):
         label = np.asarray(self.labels[i][self.indices[i][idx]])
         if self.meanStd_:
             label = (label - self.mean) / self.std
-
-        print (label)
         
         sample = {'image_left': image_left, 
                   'image_right': image_right, 
@@ -446,19 +377,18 @@ class MirkoDatasetRegNormRam(Dataset):
                 cv_image = cv2.imread(self.root_dir[i] + 'left' + img_name)
                 # grab the dimensions of the image and calculate the center
                 # of the image
-                (h, w) = cv_image.shape[:2]
-                center = (w / 2, h / 2)
+                #(h, w) = cv_image.shape[:2]
+                #center = (w / 2, h / 2)
                 # rotate the image by 180 degrees
-                M = cv2.getRotationMatrix2D(center, 180, 1.0)
-                rotated = cv2.warpAffine(cv_image, M, (w, h))
+                #M = cv2.getRotationMatrix2D(center, 180, 1.0)
+                #rotated = cv2.warpAffine(cv_image, M, (w, h))
                 
-                self.leftImages.append(np.expand_dims(cv2.cvtColor(rotated, cv2.COLOR_BGR2GRAY), axis=2))
+                self.leftImages.append(np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2))
                 cv_image = cv2.imread(self.root_dir[i] + 'right' + img_name)
                 self.rightImages.append(np.expand_dims(cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY), axis=2))
         
         if self.dset_type == 'train':        
             for i in range(self.num_train_sets):
-                print(self.labels[i])
                 temp_labels = self.labels[i]
                 temp_indices = self.indices[i]
                 actual_labels = temp_labels[temp_indices]
@@ -510,8 +440,6 @@ class MirkoDatasetRegNormRam(Dataset):
         if self.meanStd_:
             label = (label - self.mean) / self.std
         
-	print (label)
-        
         sample = {'image_left': image_left, 
                   'image_right': image_right, 
                   'label': label}
@@ -520,177 +448,3 @@ class MirkoDatasetRegNormRam(Dataset):
             sample = self.transform(sample)
 
         return sample
-    
-class MirkoDatasetRegOld(Dataset):
-    """Face trajectories dataset."""
-
-    def __init__(self, root_dir, transform=None, dset_type='train', seed=1, training_per = 0.7):
-        """
-        Args:
-            indices_file (string): Path to the txt file with image indices.
-            traj_dir (string): Directory with all the trajectories.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        
-        self.root_dir = root_dir
-        
-        self.labels = np.load(self.root_dir + 'labels.npy')
-        
-        nframes = int(len(self.labels))
-
-        np.random.seed(seed)
-        permuted_indeces = np.random.permutation(range(nframes))
-        
-        train_number = int(nframes * training_per)
-        if dset_type == 'train':
-            self.indices = permuted_indeces[:train_number]
-        else:
-            self.indices = permuted_indeces[train_number:]
-            
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx):
-        img_name = str(self.indices[idx]) + '.png'
-        image_left = io.imread(self.root_dir + 'left' + img_name)
-        image_right = io.imread(self.root_dir + 'right' + img_name)
-        
-        label = np.asarray(self.labels[self.indices[idx]])
-        
-        sample = {'image_left': image_left, 
-                  'image_right': image_right, 
-                  'label': label}
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
-    
-class MirkoDatasetFromVideo(Dataset):
-    """Face trajectories dataset."""
-
-    def __init__(self, root_dir, transform=None, dset_type='Train', seed=1):
-        """
-        Args:
-            indices_file (string): Path to the txt file with image indices.
-            traj_dir (string): Directory with all the trajectories.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        
-        self.reader_left = imageio.get_reader(root_dir + 'eye0.mp4')
-        self.reader_right = imageio.get_reader(root_dir + 'eye1.mp4')
-        metadata = self.reader_left.get_meta_data()
-        nframes = metadata['nframes']
-
-        np.random.seed(seed)
-        permuted_indeces = np.random.permutation(range(nframes))
-        
-        train_number = int(nframes * 0.7)
-        if dset_type == 'Train':
-            self.indices = permuted_indeces[:train_number]
-        else:
-            self.indices = permuted_indeces[train_number:]
-            
-        
-
-        self.fps = metadata['fps']
-        self.root_dir = root_dir
-        self.transform = transform
-        self.n_lables = 4
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx):
-        image_left = self.reader_left.get_data(self.indices[idx])
-        image_right = self.reader_right.get_data(self.indices[idx])
-        
-        
-        label_idx = torch.LongTensor(1)
-        label_int = int(self.indices[idx] / (self.fps * 4))
-        label_idx[0] = label_int  
-        label = torch.FloatTensor(self.n_lables)
-        label.zero_()
-        label.scatter_(0, label_idx, 1)
-        
-        sample = {'image_left': image_left, 
-                  'image_right': image_right, 
-                  'label': label.numpy()}
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
-    
-#reader = imageio.get_reader('data/eye1.mp4')
-#metadata = reader.get_meta_data()
-#nframes = metadata['nframes']
-#fps = metadata['fps']
-#
-#np.random.seed(2)
-#permuted_indeces = np.random.permutation(range(nframes))
-#
-#print(permuted_indeces)
-#
-#np.random.seed(2)
-#permuted_indeces = np.random.permutation(range(nframes))
-#
-#print(permuted_indeces)
-#
-#np.random.seed(5)
-#permuted_indeces = np.random.permutation(range(nframes))
-#
-#print(permuted_indeces)
-#
-#train_number = int(nframes * 0.7)
-#
-#train_idx = permuted_indeces[:train_number]
-#val_idx = permuted_indeces[train_number:]
-#
-#train_idx.size
-#
-#image = reader.get_data(10)
-#
-#
-#plt.imshow(image)
-#
-#plt.show()
-#
-#print (str(train_idx.size) + ' ' + str(val_idx.size))
-#
-#raw_input('Press enter to continue: ')
-#
-#    
-
-#data_transforms_custom1 = transforms.Compose([Rescale((120, 160)),
-#                                              RandomNoise(var=0.01)])
-#
-#dataset_train = MirkoDatasetReg(root_dir = 'dataRegression/',
-#                             transform = data_transforms_custom1,
-#                             dset_type='train', seed=3)
-#
-#sample = dataset_train[3]
-#
-#print(sample['label'])
-#
-#image = sample['image_left']
-#
-#plt.imshow(image)
-
-#plt.figure()
-
-#sample = dataset_train[3]
-#
-#image = sample['image_left']
-#
-#plt.imshow(image)
-#
-#plt.show()
-
-#raw_input('Press enter to continue: ')
