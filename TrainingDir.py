@@ -89,9 +89,9 @@ for trials in range(N_trials):
     seed = trials + 1
     
     #root_dataset = 'Datasets/simDatasetNetNoRandom/'
-    root_dataset = 'Datasets/TestDatasetSimDirections/'
+    root_dataset = 'Datasets/SimDatasetFull/'
     root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-    net_dir = 'Nets/vgg_directions/'
+    net_dir = 'Nets/alex_directions_full/'
     checkpoint_dir = net_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
@@ -100,9 +100,9 @@ for trials in range(N_trials):
     # Generating the folders for the training and validation set
     root_dir_list = []
     train_per_lis = []
-    for i in range(8):
+    for i in range(25):
         root_dir_list.append(root_dataset + str(i) + '/')
-        train_per_lis.append(0.7)
+        train_per_lis.append(0.8)
     
 #    dataset_train = MirkoDatasetReg(root_dir = ['training2/', 'training3/', 'test1/'],
     dataset_train = MirkoDatasetRegNormRam(root_dir = root_dir_list,
@@ -116,7 +116,7 @@ for trials in range(N_trials):
                                        training_per = train_per_lis,
                                        permuted = True)
     
-    dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=20,
+    dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=200,
                                              shuffle=True, num_workers=6)
     dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=2,
                                              shuffle=True, num_workers=6)

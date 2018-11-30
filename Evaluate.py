@@ -54,7 +54,7 @@ data_transforms_custom2 = transforms.Compose([Rescale((240, 320)),
 seed = 1
 
 root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction_pos/'
+net_dir = 'Nets/alex_dir_pos_full/'
 checkpoint_dir = net_dir + 'checkpoints/'
      
 
@@ -80,8 +80,10 @@ if os.path.isfile(checkpoint_dir + checkpoint_name):
     print("=> loaded checkpoint (epoch {})"
               .format(checkpoint['epoch']))
               
-for param in model.parameters():
-  print(param.data)
+model.train(False)
+
+#for param in model.parameters():
+#  print(param.data)
 
 count = 0
 time_elapsed_single = 0

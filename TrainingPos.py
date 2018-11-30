@@ -91,8 +91,8 @@ for trials in range(N_trials):
     #root_dataset = 'Datasets/simDatasetNetNoRandom/'
     root_dataset = 'Datasets/TestDatasetSimDirections/'
     root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-    net_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction_pos/'
-    dirNet_dir = 'Nets/LoglikeNoRandomLr3Wd5_sameTestTrain_direction/'
+    net_dir = 'Nets/alex_dir_pos_finetuned_full/'
+    dirNet_dir = 'Nets/alex_directions_full/'
     checkpoint_dir = net_dir + 'checkpoints/'
     checkpoint_dirNet_dir = dirNet_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
@@ -204,8 +204,8 @@ for trials in range(N_trials):
     
                     # forward
                     pred, cov = model(img1, img2)
-                    loss = criterion(pred, cov, label)
-                    #loss = criterion(pred, label)
+                    #loss = criterion(pred, cov, label)
+                    loss = criterion(pred, label)
                     
                     # try to change the loss function
                     #gain = Variable(torch.Tensor((1 / label.cpu().data.numpy()[:, 2])).cuda())                                      
@@ -302,8 +302,8 @@ for trials in range(N_trials):
         print("=> loaded checkpoint (epoch {})"
                   .format(checkpoint['epoch']))
                   
-    for param in dirNet.parameters():
-        param.requires_grad = False
+    #for param in dirNet.parameters():
+    #    param.requires_grad = False
     
     model = GazeNetRegMeanVar(1024)
     model.features = dirNet.features
@@ -311,17 +311,19 @@ for trials in range(N_trials):
     
     if (use_gpu):
         model = model.cuda()
+        dirNet = dirNet.cuda()
         
     print(model)
     
-    params = list(model.fc_layers.parameters()) + list(model.mean.parameters()) + list(model.cov.parameters())
+    #params = list(model.fc_layers.parameters()) + list(model.mean.parameters()) + list(model.cov.parameters())
+    params = list(model.parameters())
     
     optimizer_ft = optim.Adam(params, lr=1e-3, weight_decay=1e-8)
       
     if (train == True):
 #        criterion = nn.CrossEntropyLoss()
-        #criterion = nn.MSELoss()
-        criterion = LogLikeLoss
+        criterion = nn.MSELoss()
+        #criterion = LogLikeLoss
     
         # Observe that all parameters are being optimized
         optimizer_ft = optim.Adam(params, lr=1e-3, weight_decay=1e-8)
@@ -352,8 +354,8 @@ for trials in range(N_trials):
             
     if (restore == True):
         #        criterion = nn.CrossEntropyLoss()
-        #criterion = nn.MSELoss()
-        criterion = LogLikeLoss
+        criterion = nn.MSELoss()
+        #criterion = LogLikeLoss
         
         # Observe that all parameters are being optimized
         #optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)

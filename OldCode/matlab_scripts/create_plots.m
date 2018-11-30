@@ -45,7 +45,7 @@ scatter3(ground_truth(:, 1), ground_truth(:, 2), ground_truth(:, 3))
 
 pred_len = length(predictions);
 
-windowSize = 50; 
+windowSize = 20; 
 b = (1/windowSize)*ones(1,windowSize);
 a = 1;
 
@@ -65,7 +65,7 @@ legend({'Predictions','Ground truth'}, 'FontSize',20)
 set(gca, 'FontSize', 20)
 grid on
 
-windowSize = 50; 
+windowSize = 60; 
 b = (1/windowSize)*ones(1,windowSize);
 a = 1;
 

@@ -11,11 +11,11 @@ Created on Tue Oct 31 15:32:41 2017
 
 from __future__ import print_function, division
 
-from GazeNet import GazeNetRegMeanVar
+from GazeNet import GazeNetRegDir, GazeNetRegVggDir, GazeNetRegVggClassDir
 
 from MyLoss import LogLikeLoss
 
-from DataLoading import MirkoDatasetRegNorm, MirkoDatasetRegNormRam, Rescale, ToTensor, Normalize, RandomNoise
+from DataLoadingDir import MirkoDatasetRegNorm, MirkoDatasetRegNormRam, Rescale, ToTensor, Normalize, RandomNoise
 
 import torch
 import torch.nn as nn
@@ -56,8 +56,8 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-train = False
-restore = True
+train = True
+restore = False
 # Number of time the network is trained
 N_trials = 1
 
@@ -91,7 +91,7 @@ for trials in range(N_trials):
     #root_dataset = 'Datasets/simDatasetNetNoRandom/'
     root_dataset = 'Datasets/TestDatasetSimDirections/'
     root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-    net_dir = 'Nets/alex_directions_pos/'
+    net_dir = 'Nets/vgg_class_directions/'
     checkpoint_dir = net_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
@@ -100,7 +100,7 @@ for trials in range(N_trials):
     # Generating the folders for the training and validation set
     root_dir_list = []
     train_per_lis = []
-    for i in range(7):
+    for i in range(8):
         root_dir_list.append(root_dataset + str(i) + '/')
         train_per_lis.append(0.7)
     
@@ -115,17 +115,8 @@ for trials in range(N_trials):
                                        dset_type='val', seed=seed,
                                        training_per = train_per_lis,
                                        permuted = True)
-    # NORMALIZATION
-    mean = np.load('mean.npy')
-    std = np.load('std.npy')
     
-    np.save(net_dir + 'mean.npy', mean)
-    np.save(net_dir + 'std.npy', std)
-    
-    print(mean)
-    print(std)    
-    
-    dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=200,
+    dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=20,
                                              shuffle=True, num_workers=6)
     dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=2,
                                              shuffle=True, num_workers=6)
@@ -189,40 +180,26 @@ for trials in range(N_trials):
     
                     # wrap them in Variable
                     if (use_gpu):
-                        img1 = Variable(samples['image_left'].cuda())
-                        img2 = Variable(samples['image_right'].cuda())
-                        label = Variable(samples['label'].cuda())
+                        img = Variable(samples['image'].cuda())
+                        label = Variable(samples['label'].cuda().long())
                     else:
-                        img1 = Variable(samples['image_left'])
-                        img2 = Variable(samples['image_right'])
-                        label = Variable(samples['label'])
+                        img = Variable(samples['image'])
+                        label = Variable(samples['label'].long())
     
                     # zero the parameter gradients
                     optimizer.zero_grad()
     
                     # forward
-                    pred, cov = model(img1, img2)
+                    pred = model(img)
                     #loss = criterion(pred, cov, label)
                     loss = criterion(pred, label)
-                    
-                    # try to change the loss function
-                    #gain = Variable(torch.Tensor((1 / label.cpu().data.numpy()[:, 2])).cuda())                                      
-                    #loss = torch.sum(gain * torch.sqrt(torch.sum((pred - label).pow(2), 1)))                       
                     
                     # backward + optimize only if in training phase
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                    
-                    # NORMALIZATION
-                    if (use_gpu):
-                        label = (label * Variable(torch.from_numpy(std).float().cuda())) + Variable(torch.from_numpy(mean).float().cuda())
-                        pred = (pred * Variable(torch.from_numpy(std).float().cuda())) + Variable(torch.from_numpy(mean).float().cuda())
-                    else:
-                        label = (label * Variable(torch.from_numpy(std).float())) + Variable(torch.from_numpy(mean).float())
-                        pred = (pred * Variable(torch.from_numpy(std).float())) + Variable(torch.from_numpy(mean).float())
                         
-                    abs_loss = torch.sum(torch.sqrt(torch.sum((pred - label).pow(2), 1)))
+                    abs_loss = torch.eq(torch.argmax(pred, dim=1), label)
     
                     # statistics
                     running_loss += label.shape[0] * loss.data[0]
@@ -292,7 +269,7 @@ for trials in range(N_trials):
         return model, time_train, time_val
          
     
-    model = GazeNetRegMeanVar(1024)
+    model = GazeNetRegVggClassDir(1024)
     if (use_gpu):
         model = model.cuda()
         
@@ -301,9 +278,7 @@ for trials in range(N_trials):
     optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
       
     if (train == True):
-#        criterion = nn.CrossEntropyLoss()
-        criterion = nn.MSELoss()
-        #criterion = LogLikeLoss
+        criterion = nn.CrossEntropyLoss()
     
         # Observe that all parameters are being optimized
         optimizer_ft = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
@@ -333,9 +308,7 @@ for trials in range(N_trials):
                   .format(checkpoint['epoch']))
             
     if (restore == True):
-        #        criterion = nn.CrossEntropyLoss()
-        criterion = nn.MSELoss()
-        #criterion = LogLikeLoss
+        criterion = nn.CrossEntropyLoss()
         
         # Observe that all parameters are being optimized
         #optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -367,9 +340,7 @@ for trials in range(N_trials):
     
     dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=2,
                                                   shuffle=False, num_workers=8)  
-                                                  
-    mean = np.load(net_dir + 'mean.npy')
-    std = np.load(net_dir + 'std.npy')    
+                                                     
     
     for data in dataloader_test:
         # Go through a bunch of examples and record which are correctly guessed
@@ -378,36 +349,27 @@ for trials in range(N_trials):
         samples = data
         # wrap them in Variable
         if (use_gpu):
-            img1 = Variable(samples['image_left'].cuda())
-            img2 = Variable(samples['image_right'].cuda())
+            img = Variable(samples['image'].cuda())
             label = Variable(samples['label'].cuda())
         else:
-            img1 = Variable(samples['image_left'])
-            img2 = Variable(samples['image_right'])
+            img = Variable(samples['image'])
             label = Variable(samples['label'])
         
         start_time = time.time()
         #PROVA-----------------------
         #pred = model(img1.unsqueeze(0), img2.unsqueeze(0))
-        pred, cov = model(img1, img2)
+        pred = model(img)
         
         if (use_gpu):
             pred_np = pred.cpu().data.numpy()
-            cov_np = cov.cpu().data.numpy()
             ground_truth_np = label.cpu().data.numpy()
         else:
             pred_np = pred.data.numpy()
-            cov_np = cov.data.numpy()
             ground_truth_np = label.data.numpy()
-        
-        # NORMALIZATION
-        pred_np = (pred_np * std) + mean
-        ground_truth_np = (ground_truth_np * std) + mean
             
         if count == 0:
             predictions = pred_np
             ground_truth = ground_truth_np
-            covariance = cov_np
         else:
             predictions = np.concatenate((predictions, pred_np), axis=0)
             ground_truth = np.concatenate((ground_truth, ground_truth_np), axis=0)

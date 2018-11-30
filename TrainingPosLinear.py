@@ -11,7 +11,7 @@ Created on Tue Oct 31 15:32:41 2017
 
 from __future__ import print_function, division
 
-from GazeNet import GazeNetRegMeanVar
+from GazeNet import GazeNetLinear, GazeNetRegDir
 
 from MyLoss import LogLikeLoss
 
@@ -56,8 +56,8 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-train = False
-restore = True
+train = True
+restore = False
 # Number of time the network is trained
 N_trials = 1
 
@@ -91,8 +91,10 @@ for trials in range(N_trials):
     #root_dataset = 'Datasets/simDatasetNetNoRandom/'
     root_dataset = 'Datasets/TestDatasetSimDirections/'
     root_dataset_test = 'Datasets/TestDatasetSimDirections/'
-    net_dir = 'Nets/alex_directions_pos/'
+    net_dir = 'Nets/alex_pos_linear/'
+    dirNet_dir = 'Nets/vgg_directions/'
     checkpoint_dir = net_dir + 'checkpoints/'
+    checkpoint_dirNet_dir = dirNet_dir + 'checkpoints/'
     #root_dataset_test = '/media/nigno/Data/newMirko/'
     #root_dataset_test = 'newDataset/'
     #root_dataset_test = 'DatasetBig/'
@@ -146,7 +148,7 @@ for trials in range(N_trials):
     #        plt.title(title)
     #    plt.pause(0.001)  # pause a bit so that plots are updated
     
-    def train_model(model, criterion, optimizer, scheduler, num_epochs=25, start_epoch=0, loss_list=[], abs_list=[], loss_list_val=[], abs_list_val=[]):
+    def train_model(model, dirNet, criterion, optimizer, scheduler, num_epochs=25, start_epoch=0, loss_list=[], abs_list=[], loss_list_val=[], abs_list_val=[]):
         since = time.time()
     
         best_model_wts = model.state_dict()
@@ -201,7 +203,9 @@ for trials in range(N_trials):
                     optimizer.zero_grad()
     
                     # forward
-                    pred, cov = model(img1, img2)
+                    left_dir = dirNet(img1)
+                    right_dir = dirNet(img2)
+                    pred = model(left_dir, right_dir)
                     #loss = criterion(pred, cov, label)
                     loss = criterion(pred, label)
                     
@@ -291,10 +295,22 @@ for trials in range(N_trials):
         model.load_state_dict(best_model_wts)
         return model, time_train, time_val
          
+
+    dirNet = GazeNetRegDir(1024)
+    if os.path.isfile(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar'):
+        print("=> loading checkpoint '{}'".format(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar'))
+        checkpoint = torch.load(checkpoint_dirNet_dir + 'checkpointAllEpochs.tar')
+        dirNet.load_state_dict(checkpoint['state_dict'])
+        print("=> loaded checkpoint (epoch {})"
+                  .format(checkpoint['epoch']))
+                  
+    dirNet.train(False)
     
-    model = GazeNetRegMeanVar(1024)
+    model = GazeNetLinear(6)
+    
     if (use_gpu):
         model = model.cuda()
+        dirNet = dirNet.cuda()
         
     print(model)
     
@@ -313,7 +329,7 @@ for trials in range(N_trials):
         #exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
         exp_lr_scheduler = None
     
-        model, time_train, time_val = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,
+        model, time_train, time_val = train_model(model, dirNet, criterion, optimizer_ft, exp_lr_scheduler,
                                num_epochs=1000)
         time_train_global += time_train
         time_val_global += time_val
@@ -344,7 +360,7 @@ for trials in range(N_trials):
         #exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
         exp_lr_scheduler = None
         
-        model = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,
+        model = train_model(model, dirNet, criterion, optimizer_ft, exp_lr_scheduler,
                                num_epochs=1000, start_epoch=start_epoch,
                                loss_list=loss_list, abs_list=abs_list,
                                loss_list_val=loss_list_val, abs_list_val=abs_list_val)

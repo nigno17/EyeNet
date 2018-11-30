@@ -140,8 +140,8 @@ class MirkoDatasetRegNorm(Dataset):
         
         for i in range(self.num_train_sets):
             
-            self.labels.append(np.load(self.root_dir[i] + 'labels_dir_left.npy'))
-            self.labels.append(np.load(self.root_dir[i] + 'labels_dir_right.npy'))
+            #self.labels.append(np.concatenate((np.load(self.root_dir[i] + 'labels_class_left.npy'), np.load(self.root_dir[i] + 'labels_class_right.npy'))))
+            self.labels.append(np.concatenate((np.load(self.root_dir[i] + 'labels_dir_left.npy'), np.load(self.root_dir[i] + 'labels_dir_right.npy'))))
             
             self.nframes.append(int(len(self.labels[i])))
     
@@ -234,10 +234,12 @@ class MirkoDatasetRegNormRam(Dataset):
         
         for i in range(self.num_train_sets):
             
-            self.labels.append(np.load(self.root_dir[i] + 'labels_dir_left.npy'))
-            self.labels.append(np.load(self.root_dir[i] + 'labels_dir_right.npy'))
+            #self.labels.append(np.concatenate((np.load(self.root_dir[i] + 'labels_class_left.npy'), np.load(self.root_dir[i] + 'labels_class_right.npy'))))
+            self.labels.append(np.concatenate((np.load(self.root_dir[i] + 'labels_dir_left.npy'), np.load(self.root_dir[i] + 'labels_dir_right.npy'))))
             
             nframes = int(len(self.labels[i]))
+            print (len(self.labels))
+            print (len(self.labels[i]))
     
             np.random.seed(seed)
             if permuted == True:

@@ -395,6 +395,27 @@ class GazeNetRegDir(torch.nn.Module):
         
         return output_mean
         
+class GazeNetLinear(torch.nn.Module):
+    def __init__(self, D_latent = 10):
+        
+        super(GazeNetLinear, self).__init__()
+        
+        self.fc_layers = nn.Sequential(
+            #nn.Dropout(p=0.5),
+            nn.Linear(6, D_latent),
+            #nn.Dropout(p=0.5),
+            nn.Linear(D_latent, 3),
+        )
+        
+
+    def forward(self, left, right):
+
+        join_features = torch.cat((left, right), 1)
+
+        fc_output = self.fc_layers(join_features)
+        
+        return fc_output
+        
 class GazeNetRegVggDir(torch.nn.Module):
     def __init__(self, D_latent = 512):
         
@@ -462,6 +483,74 @@ class GazeNetRegVggDir(torch.nn.Module):
         output_mean = self.mean(fc_output)
         
         return output_mean
+        
+class GazeNetRegVggClassDir(torch.nn.Module):
+    def __init__(self, D_latent = 512, nClasses = 900):
+        
+        super(GazeNetRegVggClassDir, self).__init__()
+        #self.D_features = 256 * 6 * 6
+        self.D_features = 512 * 7 * 10
+        
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2, dilation=1),
+        )
+        self.latent1 = nn.Sequential(
+            nn.Linear(self.D_features, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Linear(D_latent, D_latent),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(D_latent, nClasses)
+        )
+        
+
+    def forward(self, img):
+
+        features1 = self.features(img)
+        features1 = features1.view(features1.size(0), self.D_features)
+        
+        lat1 = self.latent1(features1)
+
+        fc_output = self.fc_layers(lat1)
+        
+        output_class = self.classifier(fc_output)
+        
+        return output_class
         
 class GazeNetRegVgg(torch.nn.Module):
     def __init__(self, D_latent = 512):
